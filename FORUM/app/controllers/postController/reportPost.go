@@ -3,6 +3,7 @@ package postController
 import (
 	"FORUM/app/models"
 	"FORUM/app/services/postService"
+	"FORUM/app/services/reportService"
 	"FORUM/app/utils"
 	"fmt"
 
@@ -33,7 +34,7 @@ func CreateReport(c *gin.Context) {
 	}
 
 	// 获取帖子，并判断存在情况
-	Content, err := postService.GetContentFromDB(data.Post_id)
+	Content, err := reportService.GetContentFromDB(data.Post_id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.JsonErrorResponse(c, 200506, "帖子不存在")
@@ -45,14 +46,14 @@ func CreateReport(c *gin.Context) {
 	}
 
 	// 判断重复举报
-	err = postService.CheckReportExist(data.User_id, data.Post_id)
+	err = reportService.CheckReportExist(data.User_id, data.Post_id)
 	if err == nil {
 		utils.JsonErrorResponse(c, 200506, "请勿重复举报")
 		return
 	}
 
 	// 创建举报
-	err = postService.CreateReportPost(models.Report{
+	err = reportService.CreateReportPost(models.Report{
 		User_id: data.User_id,
 		Post_id: data.Post_id,
 		Content: Content,
@@ -88,7 +89,7 @@ func CheckReport(c *gin.Context) {
 
 	// 获取举报列表反馈
 	var report_list []models.Report
-	report_list, err = postService.GetReport(data.User_id)
+	report_list, err = reportService.GetReport(data.User_id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.JsonErrorResponse(c, 200506, "举报列表为空")
@@ -135,7 +136,7 @@ func GetCheckReport(c *gin.Context) {
 	}
 
 	// 判断权限
-	right := postService.CheckRight(data.User_id)
+	right := reportService.CheckRight(data.User_id)
 	if right == 1 {
 		utils.JsonErrorResponse(c, 200506, "权限不足")
 		return
@@ -143,7 +144,7 @@ func GetCheckReport(c *gin.Context) {
 
 	// 获取列表
 	var report_list []models.Check
-	report_list, err = postService.GetCheckReport(data.User_id)
+	report_list, err = reportService.GetCheckReport(data.User_id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.JsonErrorResponse(c, 200506, "举报列表为空")
@@ -180,14 +181,14 @@ func TrailPost(c *gin.Context) {
 	}
 
 	// 判断权限
-	right := postService.CheckRight(data.User_id)
+	right := reportService.CheckRight(data.User_id)
 	if right == 1 {
 		utils.JsonErrorResponse(c, 200506, "权限不足")
 		return
 	}
 
 	// 判断帖子是否存在，存在便获取
-	report, err := postService.GetReportData(data.Post_id)
+	report, err := reportService.GetReportData(data.Post_id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.JsonErrorResponse(c, 200506, "帖子不存在")
@@ -205,7 +206,7 @@ func TrailPost(c *gin.Context) {
 	}
 
 	// 检验aproval数值
-	flag := postService.CheckApproval(data.Approval)
+	flag := reportService.CheckApproval(data.Approval)
 	if !flag {
 		utils.JsonErrorResponse(c, 200504, "审核类型错误")
 		return
@@ -213,7 +214,7 @@ func TrailPost(c *gin.Context) {
 
 	// 同意，更新数据，进行删除
 	if data.Approval == 1 {
-		err = postService.UpdateReport(models.Report{
+		err = reportService.UpdateReport(models.Report{
 			User_id: report.User_id,
 			Post_id: report.Post_id,
 			Content: report.Content,
@@ -231,7 +232,7 @@ func TrailPost(c *gin.Context) {
 		}
 		// 不同意，更新状态
 	} else {
-		err = postService.UpdateReport(models.Report{
+		err = reportService.UpdateReport(models.Report{
 			User_id: report.User_id,
 			Post_id: report.Post_id,
 			Content: report.Content,
