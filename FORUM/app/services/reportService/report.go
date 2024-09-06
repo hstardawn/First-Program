@@ -3,6 +3,8 @@ package reportService
 import (
 	"FORUM/app/models"
 	"FORUM/config/database"
+
+	"gorm.io/gorm"
 )
 
 func CheckReportExist(user_id uint, post_id uint) error {
@@ -36,14 +38,11 @@ func CheckRight(user_id uint) int {
 	return right
 }
 func GetCheckReport(user_id uint) ([]models.Check, error) {
-	result := database.DB.Where("status =?", 0).First(&models.Report{})
-	if result.Error != nil {
-		return nil, result.Error
-	}
 	var reportpost []models.Report
-	result = database.DB.Where("status =?", 0).Find(&reportpost)
-	if result.Error != nil {
-		return nil, result.Error
+	result := database.DB.Where("status =?", 0).Find(&reportpost)
+	if result.RowsAffected == 0 {
+		err := gorm.ErrRecordNotFound
+		return nil, err
 	}
 
 	report_list := make([]models.Check, len(reportpost))
