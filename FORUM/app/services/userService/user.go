@@ -8,7 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func CheckUsrExistUsername(username string) error {
+func CheckUser(username string) error {
 	result := database.DB.Where("username= ?", username).First(&models.User{})
 	return result.Error
 }

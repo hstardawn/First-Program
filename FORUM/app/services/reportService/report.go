@@ -7,8 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func CheckReportExist(user_id uint, post_id uint) error {
-	result := database.DB.Where("user_id=? AND post_id= ?", user_id, post_id).First(&models.Report{})
+func CheckReportExist(post_id uint) error {
+	result := database.DB.Where("post_id= ?" , post_id).First(&models.Report{})
 	return result.Error
 }
 
@@ -31,20 +31,22 @@ func GetReport(user_id uint) ([]models.Report, error) {
 	return report_list, nil
 }
 
-func CheckRight(user_id uint) int {
+func CheckRight(user_id uint) (int, error) {
 	var user models.User
-	database.DB.Where("user_id=?", user_id).First(&user)
+	result :=database.DB.Where("user_id=?", user_id).First(&user)
 	right := user.User_type
-	return right
+	return right, result.Error
 }
+
 func GetCheckReport(user_id uint) ([]models.Check, error) {
 	var reportpost []models.Report
 	result := database.DB.Where("status =?", 0).Find(&reportpost)
 	if result.RowsAffected == 0 {
-		err := gorm.ErrRecordNotFound
-		return nil, err
+		result.Error =gorm.ErrRecordNotFound
 	}
-
+	if result.Error != nil{
+		return nil, result.Error
+	}
 	report_list := make([]models.Check, len(reportpost))
 	for i, post := range reportpost {
 		report_list[i].Content = post.Content
@@ -53,7 +55,7 @@ func GetCheckReport(user_id uint) ([]models.Check, error) {
 		report_list[i].Post_id = post.Post_id
 	}
 
-	return report_list, nil
+	return report_list, result.Error
 }
 
 func GetContentFromDB(post_id uint) (string, error) {

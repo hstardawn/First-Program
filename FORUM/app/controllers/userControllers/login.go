@@ -24,12 +24,12 @@ func Login(c *gin.Context) {
 
 	}
 
-	err = userService.CheckUsrExistUsername(data.Username)
+	err = userService.CheckUser(data.Username)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.JsonErrorResponse(c, 200506, "用户不存在")
 		} else {
-			utils.JsonInternalServerErrorResponse(c)
+			utils.JsonErrorResponse(c, 200506, "获取失败")
 		}
 		return
 	}
@@ -37,7 +37,7 @@ func Login(c *gin.Context) {
 	var user *models.User
 	user, err = userService.GetUserByUsername(data.Username)
 	if err != nil {
-		utils.JsonInternalServerErrorResponse(c)
+		utils.JsonErrorResponse(c, 200506, "获取失败")
 		return
 	}
 

@@ -25,7 +25,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	err = userService.CheckUsrExistUsername(data.Username)
+	err = userService.CheckUser(data.Username)
 	if err == nil {
 		utils.JsonErrorResponse(c, 200505, "用户名已存在")
 		return
@@ -61,7 +61,7 @@ func Register(c *gin.Context) {
 	})
 
 	if err != nil {
-		utils.JsonInternalServerErrorResponse(c)
+		utils.JsonErrorResponse(c, 200506, "注册失败")
 		return
 	}
 

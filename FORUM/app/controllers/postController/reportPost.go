@@ -40,13 +40,13 @@ func CreateReport(c *gin.Context) {
 			utils.JsonErrorResponse(c, 200506, "帖子不存在")
 			return
 		} else {
-			utils.JsonInternalServerErrorResponse(c)
+			utils.JsonErrorResponse(c, 200506, "获取帖子失败")
 			return
 		}
 	}
 
 	// 判断重复举报
-	err = reportService.CheckReportExist(data.User_id, data.Post_id)
+	err = reportService.CheckReportExist(data.Post_id)
 	if err == nil {
 		utils.JsonErrorResponse(c, 200506, "请勿重复举报")
 		return
@@ -136,7 +136,10 @@ func GetCheckReport(c *gin.Context) {
 	}
 
 	// 判断权限
-	right := reportService.CheckRight(data.User_id)
+	right, err := reportService.CheckRight(data.User_id)
+	if err != nil {
+		utils.JsonInternalServerErrorResponse(c)
+	}
 	if right == 1 {
 		utils.JsonErrorResponse(c, 200506, "权限不足")
 		return
@@ -150,7 +153,7 @@ func GetCheckReport(c *gin.Context) {
 			utils.JsonErrorResponse(c, 200506, "举报列表为空")
 			return
 		} else {
-			utils.JsonInternalServerErrorResponse(c)
+			utils.JsonErrorResponse(c, 200513, "获取未审批的举报列表失败")
 			return
 		}
 	}
@@ -181,7 +184,10 @@ func TrailPost(c *gin.Context) {
 	}
 
 	// 判断权限
-	right := reportService.CheckRight(data.User_id)
+	right ,err:= reportService.CheckRight(data.User_id)
+	if err != nil {
+		utils.JsonInternalServerErrorResponse(c)
+	}
 	if right == 1 {
 		utils.JsonErrorResponse(c, 200506, "权限不足")
 		return
@@ -222,12 +228,12 @@ func TrailPost(c *gin.Context) {
 			Status:  data.Approval,
 		})
 		if err != nil {
-			utils.JsonInternalServerErrorResponse(c)
+			utils.JsonErrorResponse(c, 200506, "更新失败")
 			return
 		}
 		err = postService.DeletePost(data.Post_id)
 		if err != nil {
-			utils.JsonInternalServerErrorResponse(c)
+			utils.JsonErrorResponse(c, 200506, "删除失败")
 			return
 		}
 		// 不同意，更新状态
@@ -240,7 +246,7 @@ func TrailPost(c *gin.Context) {
 			Status:  data.Approval,
 		})
 		if err != nil {
-			utils.JsonInternalServerErrorResponse(c)
+			utils.JsonErrorResponse(c, 200506, "更新失败")
 			return
 		}
 

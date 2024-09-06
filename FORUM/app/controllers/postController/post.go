@@ -84,7 +84,7 @@ func UpdatePost(c *gin.Context) {
 		Time:    now,
 	})
 	if err != nil {
-		utils.JsonInternalServerErrorResponse(c)
+		utils.JsonErrorResponse(c, 200506, "修改帖子失败")
 		return
 	}
 
@@ -122,7 +122,7 @@ func DeletePost(c *gin.Context) {
 	// 进行删除
 	err = postService.DeletePost(data.Post_id)
 	if err != nil {
-		utils.JsonInternalServerErrorResponse(c)
+		utils.JsonErrorResponse(c, 200506, "删除失败")
 		return
 	}
 	// 返回成功
@@ -138,7 +138,7 @@ func GetPost(c *gin.Context) {
 			utils.JsonErrorResponse(c, 200506, "未发布帖子")
 			return
 		} else {
-			utils.JsonInternalServerErrorResponse(c)
+			utils.JsonErrorResponse(c, 200506, "获取失败")
 			return
 		}
 	}
