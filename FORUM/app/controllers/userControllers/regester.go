@@ -41,7 +41,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	flag2 := userService.CheckPasswordLength(data.Password, 8, 16)
+	flag2 := userService.CheckPasswordLength(data.Password)
 	if !flag2 {
 		utils.JsonErrorResponse(c, 200503, "密码长度必须在8-16位")
 		return

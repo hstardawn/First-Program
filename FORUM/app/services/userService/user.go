@@ -4,6 +4,8 @@ import (
 	"FORUM/app/models"
 	"FORUM/config/database"
 	"unicode"
+
+	"github.com/go-playground/validator/v10"
 )
 
 func CheckUsrExistUsername(username string) error {
@@ -33,11 +35,20 @@ func IsUsernameAllDigits(username string) bool {
 	return true
 }
 
-func CheckPasswordLength(password string, minLength, maxLength int) bool {
-	if len(password) >= minLength && len(password) <= maxLength {
+type UserPassword struct{
+	Password string ` validate:"min=8,max=16"`
+}
+func CheckPasswordLength(password string) bool {
+	validate := validator.New()
+
+	var userpassword UserPassword
+	userpassword.Password = password
+	err := validate.Struct(userpassword)
+	if err == nil {
 		return true
+	} else {
+		return false
 	}
-	return false
 }
 
 func Register(user models.User) error {
