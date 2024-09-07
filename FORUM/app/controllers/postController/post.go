@@ -13,7 +13,7 @@ import (
 
 type PostData struct {
 	Content string `json:"content" binding:"required"`
-	User_id uint   `json:"user_id" binding:"required"`
+	UserId uint   `json:"user_id" binding:"required"`
 }
 
 // 发布帖子
@@ -26,7 +26,7 @@ func CreatPost(c *gin.Context) {
 	}
 
 	// 判断用户是否存在
-	_, err = userService.GetUserByUserid(data.User_id)
+	_, err = userService.GetUserByUserid(data.UserId)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
@@ -35,7 +35,7 @@ func CreatPost(c *gin.Context) {
 	now := time.Now()
 	err = postService.CreatPost(models.Post{
 		Content: data.Content,
-		User_id: data.User_id,
+		UserId: data.UserId,
 		Time:    now,
 	})
 
@@ -49,8 +49,8 @@ func CreatPost(c *gin.Context) {
 
 // 修改帖子
 type UpdatePostData struct {
-	User_id uint   `json:"user_id" binding:"required"`
-	Post_id uint   `json:"post_id" binding:"required"`
+	UserId uint   `json:"user_id" binding:"required"`
+	PostId uint   `json:"post_id" binding:"required"`
 	Content string `json:"content" binding:"required"`
 }
 
@@ -63,13 +63,14 @@ func UpdatePost(c *gin.Context) {
 	}
 
 	// 判断帖子是否存在
-	post , err := postService.GetPost(data.Post_id)
+	post , err := postService.GetPost(data.PostId)
 	if err != nil{
 		utils.JsonErrorResponse(c, 200506, "查找失败")
+		return
 	}
 
 	// 判断用户
-	if  post.User_id != data.User_id{
+	if  post.UserId != data.UserId{
 		utils.JsonErrorResponse(c, 200506, "不是帖子主人，无权修改")
 		return
 	}
@@ -77,8 +78,8 @@ func UpdatePost(c *gin.Context) {
 	// 修改帖子
 	now := time.Now()
 	err = postService.UpdatePost(models.Post{
-		User_id: data.User_id,
-		Post_id: data.Post_id,
+		UserId: data.UserId,
+		PostId: data.PostId,
 		Content: data.Content,
 		Time:    now,
 	})
@@ -92,8 +93,8 @@ func UpdatePost(c *gin.Context) {
 
 // 删除帖子
 type DeletePostData struct {
-	User_id uint `form:"user_id" binding:"required"`
-	Post_id uint `form:"post_id" binding:"required"`
+	UserId uint `form:"user_id" binding:"required"`
+	PostId uint `form:"post_id" binding:"required"`
 }
 
 func DeletePost(c *gin.Context) {
@@ -105,20 +106,20 @@ func DeletePost(c *gin.Context) {
 	}
 
 	// 判断帖子是否存在
-	post, err := postService.GetPost(data.Post_id)
+	post, err := postService.GetPost(data.PostId)
 	if err == gorm.ErrRecordNotFound {
 		utils.JsonErrorResponse(c, 200506, "帖子不存在")
 		return
 	}
 
 	// 判断用户
-	if  post.User_id != data.User_id {
+	if  post.UserId != data.UserId {
 		utils.JsonErrorResponse(c, 200506, "不是帖子主人，无权修改")
 		return
 	}
 
 	// 进行删除
-	err = postService.DeletePost(data.Post_id)
+	err = postService.DeletePost(data.PostId)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "删除失败")
 		return

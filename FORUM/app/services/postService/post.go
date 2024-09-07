@@ -10,8 +10,6 @@ func CreatPost(post models.Post) error {
 	return result.Error
 }
 
-
-
 func UpdatePost(post models.Post) error {
 	result := database.DB.Omit("user_id & post_id ").Save(&post)
 	return result.Error
@@ -19,7 +17,7 @@ func UpdatePost(post models.Post) error {
 
 func GetPost(post_id uint) (models.Post, error) {
 	var post models.Post
-	result := database.DB.Where("post_id= ?", post_id).First(&post)
+	result := database.DB.Unscoped().Where("post_id= ?", post_id).First(&post)
 	return post ,result.Error
 }
 
@@ -33,8 +31,8 @@ func TransformPostList(postList []models.Post) []models.PostList {
 	for i, post := range postList {
 		newPostList[i] = models.PostList{
 			Content: post.Content,
-			User_id: post.User_id,
-			Id:      post.Post_id,
+			UserId: post.UserId,
+			Id:      post.PostId,
 			Time:    post.Time,
 		}
 	}
@@ -43,7 +41,7 @@ func TransformPostList(postList []models.Post) []models.PostList {
 
 func GetPostList() ([]models.PostList, error) {
 	var post_list []models.Post
-	result := database.DB.Find(&post_list)
+	result := database.DB.Unscoped().Find(&post_list)
 	if result.Error != nil {
 		return nil, result.Error
 	}

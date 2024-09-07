@@ -6,14 +6,15 @@ import (
 	"FORUM/app/services/reportService"
 	"FORUM/app/services/userService"
 	"FORUM/app/utils"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 // 举报帖子
 type ReportData struct {
-	User_id uint   `json:"user_id" binding:"required"`
-	Post_id uint   `json:"post_id" binding:"required"`
+	UserId uint   `json:"user_id" binding:"required"`
+	PostId uint   `json:"post_id" binding:"required"`
 	Reason  string `json:"reason" binding:"required"`
 }
 
@@ -26,14 +27,14 @@ func CreateReport(c *gin.Context) {
 	}
 
 	// 判断用户存在
-	_,err = userService.GetUserByUserid(data.User_id)
+	_,err = userService.GetUserByUserid(data.UserId)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
 	}
 
 	// 获取帖子，并判断存在情况
-	post, err := postService.GetPost(data.Post_id)
+	_,err = postService.GetPost(data.PostId)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.JsonErrorResponse(c, 200506, "帖子不存在")
@@ -45,7 +46,7 @@ func CreateReport(c *gin.Context) {
 	}
 
 	// 判断重复举报
-	err = reportService.CheckReportExist(data.Post_id)
+	err = reportService.CheckReportExist(data.PostId)
 	if err == nil {
 		utils.JsonErrorResponse(c, 200506, "请勿重复举报")
 		return
@@ -53,9 +54,8 @@ func CreateReport(c *gin.Context) {
 
 	// 创建举报
 	err = reportService.CreateReportPost(models.Report{
-		User_id: data.User_id,
-		Post_id: data.Post_id,
-		Content: post.Content,
+		UserId: data.UserId,
+		PostId: data.PostId,
 		Reason:  data.Reason,
 	})
 	if err != nil {
@@ -68,7 +68,7 @@ func CreateReport(c *gin.Context) {
 
 // 查看举报审批
 type GetReport struct {
-	User_id uint `form:"user_id" binding:"required"`
+	UserId uint `form:"user_id" binding:"required"`
 }
 
 func CheckReport(c *gin.Context) {
@@ -80,7 +80,7 @@ func CheckReport(c *gin.Context) {
 	}
 
 	// 判断用户存在
-	_,err = userService.GetUserByUserid(data.User_id)
+	_,err = userService.GetUserByUserid(data.UserId)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
@@ -88,23 +88,27 @@ func CheckReport(c *gin.Context) {
 
 	// 获取举报列表反馈
 	var report_list []models.Report
-	report_list, err = reportService.GetReport(data.User_id)
+	report_list, err = reportService.GetReport(data.UserId)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			utils.JsonErrorResponse(c, 200506, "举报列表为空")
-			return
-		} else {
-			utils.JsonErrorResponse(c, 200506, "获取失败")
-			return
-		}
+		utils.JsonErrorResponse(c, 200506, "获取失败")
+		return
+	}
+	if len(report_list)== 0{
+		utils.JsonErrorResponse(c, 200506, "举报列表为空")
+		return
 	}
 
 	// 变更格式，去userid
 	newReportList := make([]models.ReportList, len(report_list))
 	for i, report := range report_list {
+		post, err := postService.GetPost(report.PostId)
+		if err != nil {
+			utils.JsonErrorResponse(c, 200506, "获取帖子失败")
+			return
+		}
 		newReportList[i] = models.ReportList{
-			Post_id: report.Post_id,
-			Content: report.Content,
+			PostId: report.PostId,
+			Content: post.Content,
 			Reason:  report.Reason,
 			Status:  report.Status,
 		}
@@ -117,7 +121,7 @@ func CheckReport(c *gin.Context) {
 
 // 获取所有未审批的被举报帖子
 type GetCheckData struct {
-	User_id uint `form:"user_id" binding:"required"`
+	UserId uint `form:"user_id" binding:"required"`
 }
 
 func GetCheckReport(c *gin.Context) {
@@ -128,42 +132,53 @@ func GetCheckReport(c *gin.Context) {
 	}
 
 	// 判断用户存在
-	_,err = userService.GetUserByUserid(data.User_id)
+	user,err := userService.GetUserByUserid(data.UserId)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
 	}
 
 	// 判断权限
-	user, err := userService.GetUserByUserid(data.User_id)
-	if err != nil {
-		utils.JsonErrorResponse(c, 200506 ,"获取失败")
-	}
-	if user.User_type == 1 {
+	if user.UserType == 1 {
 		utils.JsonErrorResponse(c, 200506, "权限不足")
 		return
 	}
 
 	// 获取列表
-	var report_list []models.Check
-	report_list, err = reportService.GetCheckReport(data.User_id)
+	reportpost, err := reportService.GetCheckReport()
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			utils.JsonErrorResponse(c, 200506, "举报列表为空")
-			return
-		} else {
-			utils.JsonErrorResponse(c, 200513, "获取未审批的举报列表失败")
+		utils.JsonErrorResponse(c, 200506, "获取失败")
+		return
+	}
+	if len(reportpost)== 0{
+		utils.JsonErrorResponse(c, 200506, "举报列表为空")
+		return
+	}
+	report_list := make([]models.Check, len(reportpost))
+	for i, report := range reportpost {
+		user ,err:=userService.GetUserByUserid(report.UserId)
+		if err != nil {
+			utils.JsonErrorResponse(c, 200506, "获取用户失败")
 			return
 		}
-	}
 
+		post, err := postService.GetPost(report.PostId)
+		if err != nil {
+			utils.JsonErrorResponse(c, 200506, "获取帖子失败")
+			return
+		}
+		report_list[i].Content = post.Content
+		report_list[i].Reason = report.Reason
+		report_list[i].Username = user.Username
+		report_list[i].PostId = report.PostId
+	}
 	utils.JsonSuccessResponse(c, report_list)
 }
 
 // 审核被举报的帖子
 type CheckPost struct {
-	User_id  uint `json:"user_id" binding:"required"`
-	Post_id  uint `json:"post_id" binding:"required"`
+	UserId  uint `json:"user_id" binding:"required"`
+	PostId  uint `json:"post_id" binding:"required"`
 	Approval int  `json:"approval" binding:"required"`
 }
 
@@ -176,19 +191,19 @@ func TrailPost(c *gin.Context) {
 	}
 	// 判断用户存在
 
-	user,err := userService.GetUserByUserid(data.User_id)
+	user,err := userService.GetUserByUserid(data.UserId)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
 	}
 
 	// 判断权限
-	if user.User_type == 1{
+	if user.UserType == 1{
 		utils.JsonErrorResponse(c, 200506, "权限不足")
 		return
 	}
 	// 判断帖子是否存在，存在便获取
-	report, err := reportService.GetReportData(data.Post_id)
+	report, err := reportService.GetReportData(data.PostId)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200504, "帖子不存在")
 		return
@@ -210,9 +225,8 @@ func TrailPost(c *gin.Context) {
 	// 同意，更新数据，进行删除
 	if data.Approval == 1 {
 		err = reportService.UpdateReport(models.Report{
-			User_id: report.User_id,
-			Post_id: report.Post_id,
-			Content: report.Content,
+			UserId: report.UserId,
+			PostId: report.PostId,
 			Reason:  report.Reason,
 			Status:  data.Approval,
 		})
@@ -220,7 +234,7 @@ func TrailPost(c *gin.Context) {
 			utils.JsonErrorResponse(c, 200506, "更新失败")
 			return
 		}
-		err = postService.DeletePost(data.Post_id)
+		err = postService.DeletePost(data.PostId)
 		if err != nil {
 			utils.JsonErrorResponse(c, 200506, "删除失败")
 			return
@@ -228,9 +242,8 @@ func TrailPost(c *gin.Context) {
 		// 不同意，更新状态
 	} else {
 		err = reportService.UpdateReport(models.Report{
-			User_id: report.User_id,
-			Post_id: report.Post_id,
-			Content: report.Content,
+			UserId: report.UserId,
+			PostId: report.PostId,
 			Reason:  report.Reason,
 			Status:  data.Approval,
 		})

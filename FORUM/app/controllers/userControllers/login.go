@@ -42,7 +42,7 @@ func Login(c *gin.Context) {
 	}
 
 	utils.JsonSuccessResponse(c, gin.H{
-		"user_id":   user.User_id,
-		"user_type": user.User_type,
+		"user_id":   user.UserId,
+		"user_type": user.UserType,
 	})
 }

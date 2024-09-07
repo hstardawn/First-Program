@@ -14,7 +14,7 @@ type RegisterData struct {
 	Username  string `json:"username" binding:"required"`
 	Name      string `json:"name" binding:"required"`
 	Password  string `json:"password" binding:"required"`
-	User_type int    `json:"user_type" binding:"required"`
+	UserType int    `json:"user_type" binding:"required"`
 }
 
 func Register(c *gin.Context) {
@@ -48,7 +48,7 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	flag3 := userService.CheckUserType(data.User_type)
+	flag3 := userService.CheckUserType(data.UserType)
 	if !flag3 {
 		utils.JsonErrorResponse(c, 200504, "用户类型错误")
 		return
@@ -58,7 +58,7 @@ func Register(c *gin.Context) {
 		Username:  data.Username,
 		Name:      data.Name,
 		Password:  data.Password,
-		User_type: data.User_type,
+		UserType: data.UserType,
 	})
 
 	if err != nil {
