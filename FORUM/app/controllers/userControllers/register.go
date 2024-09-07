@@ -25,12 +25,13 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	err = userService.CheckUser(data.Username)
-	if err == nil {
+	user, err := userService.GetUserByUsername(data.Username)
+	var usermodel models.User
+	if user != usermodel{
 		utils.JsonErrorResponse(c, 200505, "用户名已存在")
 		return
 	} else if err != gorm.ErrRecordNotFound {
-		utils.JsonInternalServerErrorResponse(c)
+		utils.JsonErrorResponse(c, 200506 ,"查找失败")
 		return
 	}
 

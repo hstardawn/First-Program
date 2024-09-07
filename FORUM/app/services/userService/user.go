@@ -8,18 +8,16 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func CheckUser(username string) error {
-	result := database.DB.Where("username= ?", username).First(&models.User{})
-	return result.Error
-}
-
-func GetUserByUsername(username string) (*models.User, error) {
+func GetUserByUsername(username string) (models.User, error) {
 	var user models.User
 	result := database.DB.Where("username= ?", username).First(&user)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &user, nil
+	return user, result.Error
+}
+
+func GetUserByUserid(userid uint) (models.User, error) {
+	var user models.User
+	result := database.DB.Where("user_id= ?", userid).First(&user)
+	return user, result.Error
 }
 
 func ComparePwd(pwd1 string, pwd2 string) bool {

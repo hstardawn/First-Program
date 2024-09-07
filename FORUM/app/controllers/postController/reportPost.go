@@ -4,9 +4,8 @@ import (
 	"FORUM/app/models"
 	"FORUM/app/services/postService"
 	"FORUM/app/services/reportService"
+	"FORUM/app/services/userService"
 	"FORUM/app/utils"
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -27,14 +26,14 @@ func CreateReport(c *gin.Context) {
 	}
 
 	// 判断用户存在
-	err = postService.CheckUserByUserid(data.User_id)
+	_,err = userService.GetUserByUserid(data.User_id)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
 	}
 
 	// 获取帖子，并判断存在情况
-	Content, err := reportService.GetContentFromDB(data.Post_id)
+	post, err := postService.GetPost(data.Post_id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.JsonErrorResponse(c, 200506, "帖子不存在")
@@ -56,7 +55,7 @@ func CreateReport(c *gin.Context) {
 	err = reportService.CreateReportPost(models.Report{
 		User_id: data.User_id,
 		Post_id: data.Post_id,
-		Content: Content,
+		Content: post.Content,
 		Reason:  data.Reason,
 	})
 	if err != nil {
@@ -81,7 +80,7 @@ func CheckReport(c *gin.Context) {
 	}
 
 	// 判断用户存在
-	err = postService.CheckUserByUserid(data.User_id)
+	_,err = userService.GetUserByUserid(data.User_id)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
@@ -95,7 +94,7 @@ func CheckReport(c *gin.Context) {
 			utils.JsonErrorResponse(c, 200506, "举报列表为空")
 			return
 		} else {
-			utils.JsonInternalServerErrorResponse(c)
+			utils.JsonErrorResponse(c, 200506, "获取失败")
 			return
 		}
 	}
@@ -129,18 +128,18 @@ func GetCheckReport(c *gin.Context) {
 	}
 
 	// 判断用户存在
-	err = postService.CheckUserByUserid(data.User_id)
+	_,err = userService.GetUserByUserid(data.User_id)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
 	}
 
 	// 判断权限
-	right, err := reportService.CheckRight(data.User_id)
+	user, err := userService.GetUserByUserid(data.User_id)
 	if err != nil {
-		utils.JsonInternalServerErrorResponse(c)
+		utils.JsonErrorResponse(c, 200506 ,"获取失败")
 	}
-	if right == 1 {
+	if user.User_type == 1 {
 		utils.JsonErrorResponse(c, 200506, "权限不足")
 		return
 	}
@@ -175,34 +174,24 @@ func TrailPost(c *gin.Context) {
 		utils.JsonErrorResponse(c, 200501, "参数错误")
 		return
 	}
-	fmt.Println(data.Approval)
 	// 判断用户存在
-	err = postService.CheckUserByUserid(data.User_id)
+
+	user,err := userService.GetUserByUserid(data.User_id)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
 	}
 
 	// 判断权限
-	right ,err:= reportService.CheckRight(data.User_id)
-	if err != nil {
-		utils.JsonInternalServerErrorResponse(c)
-	}
-	if right == 1 {
+	if user.User_type == 1{
 		utils.JsonErrorResponse(c, 200506, "权限不足")
 		return
 	}
-
 	// 判断帖子是否存在，存在便获取
 	report, err := reportService.GetReportData(data.Post_id)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			utils.JsonErrorResponse(c, 200506, "帖子不存在")
-			return
-		} else {
-			utils.JsonInternalServerErrorResponse(c)
-			return
-		}
+		utils.JsonErrorResponse(c, 200504, "帖子不存在")
+		return
 	}
 
 	// 判断帖子状态

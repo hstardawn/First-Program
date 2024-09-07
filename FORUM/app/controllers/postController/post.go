@@ -3,6 +3,7 @@ package postController
 import (
 	"FORUM/app/models"
 	"FORUM/app/services/postService"
+	"FORUM/app/services/userService"
 	"FORUM/app/utils"
 	"time"
 
@@ -25,7 +26,7 @@ func CreatPost(c *gin.Context) {
 	}
 
 	// 判断用户是否存在
-	err = postService.CheckUserByUserid(data.User_id)
+	_, err = userService.GetUserByUserid(data.User_id)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
@@ -62,15 +63,13 @@ func UpdatePost(c *gin.Context) {
 	}
 
 	// 判断帖子是否存在
-	err = postService.CheckPostExist(data.Post_id)
-	if err != nil {
-		utils.JsonErrorResponse(c, 200506, "帖子不存在")
-		return
+	post , err := postService.GetPost(data.Post_id)
+	if err != nil{
+		utils.JsonErrorResponse(c, 200506, "查找失败")
 	}
 
 	// 判断用户
-	userid := postService.GetUseridByPostid(data.Post_id)
-	if userid != data.User_id {
+	if  post.User_id != data.User_id{
 		utils.JsonErrorResponse(c, 200506, "不是帖子主人，无权修改")
 		return
 	}
@@ -106,15 +105,14 @@ func DeletePost(c *gin.Context) {
 	}
 
 	// 判断帖子是否存在
-	err = postService.CheckPostExist(data.Post_id)
+	post, err := postService.GetPost(data.Post_id)
 	if err == gorm.ErrRecordNotFound {
 		utils.JsonErrorResponse(c, 200506, "帖子不存在")
 		return
 	}
 
 	// 判断用户
-	userid := postService.GetUseridByPostid(data.Post_id)
-	if userid != data.User_id {
+	if  post.User_id != data.User_id {
 		utils.JsonErrorResponse(c, 200506, "不是帖子主人，无权修改")
 		return
 	}
