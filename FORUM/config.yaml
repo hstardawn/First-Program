@@ -1,6 +1,17 @@
-database:
+mysql:
   DBname: FORUM
   host: "127.0.0.1"
   port: 3306
   user: root
+  pass: Hxx332671
+
+session:
+  name: FORUM-session
+  driver: redis
+
+redis:
+  host: "121.40.27.84"
+  port: 6379
+  db: 0             #asynq用的是db+1
+  user: 
   pass: Hxx332671

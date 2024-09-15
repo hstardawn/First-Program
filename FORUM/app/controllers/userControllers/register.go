@@ -26,7 +26,7 @@ func Register(c *gin.Context) {
 	}
 
 	user, err := userService.GetUserByUsername(data.Username)
-	var usermodel models.User
+	var usermodel *models.User
 	if user != usermodel{
 		utils.JsonErrorResponse(c, 200505, "用户名已存在")
 		return

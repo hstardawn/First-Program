@@ -29,6 +29,7 @@ func CreatPost(c *gin.Context) {
 	_, err = userService.GetUserByUserid(data.UserId)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
+		
 		return
 	}
 
@@ -43,7 +44,7 @@ func CreatPost(c *gin.Context) {
 		utils.JsonInternalServerErrorResponse(c)
 		return
 	}
-
+	println(err)
 	utils.JsonSuccessResponse(c, nil)
 }
 
@@ -68,7 +69,7 @@ func UpdatePost(c *gin.Context) {
 		utils.JsonErrorResponse(c, 200506, "查找失败")
 		return
 	}
-
+	
 	// 判断用户
 	if  post.UserId != data.UserId{
 		utils.JsonErrorResponse(c, 200506, "不是帖子主人，无权修改")

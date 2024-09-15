@@ -5,7 +5,7 @@ import (
 	"FORUM/config/database"
 )
 
-func CheckReportExist(postid uint) error {
+func CheckReportExist(postid uint, userid uint) error {
 	result := database.DB.Where("post_id= ?" , postid).First(&models.Report{})
 	return result.Error
 }

@@ -4,6 +4,7 @@ import (
 	"FORUM/app/models"
 	"FORUM/app/services/postService"
 	"FORUM/app/services/reportService"
+	"FORUM/app/services/sessionService"
 	"FORUM/app/services/userService"
 	"FORUM/app/utils"
 
@@ -27,7 +28,7 @@ func CreateReport(c *gin.Context) {
 	}
 
 	// 判断用户存在
-	_,err = userService.GetUserByUserid(data.UserId)
+	_, err = sessionService.GetUserSession(c)
 	if err != nil {
 		utils.JsonErrorResponse(c, 200506, "用户不存在")
 		return
@@ -46,7 +47,7 @@ func CreateReport(c *gin.Context) {
 	}
 
 	// 判断重复举报
-	err = reportService.CheckReportExist(data.PostId)
+	err = reportService.CheckReportExist(data.PostId, data.UserId)
 	if err == nil {
 		utils.JsonErrorResponse(c, 200506, "请勿重复举报")
 		return

@@ -2,6 +2,7 @@ package userControllers
 
 import (
 	"FORUM/app/models"
+	"FORUM/app/services/sessionService"
 	"FORUM/app/services/userService"
 	"FORUM/app/utils"
 
@@ -24,7 +25,7 @@ func Login(c *gin.Context) {
 
 	}
 
-	var user models.User
+	var user *models.User
 	user, err = userService.GetUserByUsername(data.Username)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -41,8 +42,18 @@ func Login(c *gin.Context) {
 		return
 	}
 
+
+	err = sessionService.SetUserSession(c, user)
+	if err != nil {
+		utils.JsonInternalServerErrorResponse(c)
+		return
+	}
+
 	utils.JsonSuccessResponse(c, gin.H{
 		"user_id":   user.UserId,
 		"user_type": user.UserType,
 	})
+
+
+		
 }

@@ -13,17 +13,18 @@ import (
 var DB *gorm.DB
 
 func Init() {
-	user := config.Config.GetString("database.user")
-	pass := config.Config.GetString("database.pass")
-	port := config.Config.GetString("database.port")
-	host := config.Config.GetString("database.host")
-	DBname := config.Config.GetString("database.DBname")
+	user := config.Config.GetString("mysql.user")
+    pass := config.Config.GetString("mysql.pass")
+    host := config.Config.GetString("mysql.host")
+    port := config.Config.GetString("mysql.port")
+    name := config.Config.GetString("mysql.DBname")
 
-	dsn := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=utf8&parseTime=True&loc=Local", user, pass, host, port, DBname)
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
-
-	if err != nil {
-		log.Fatal("Database migrate failed: ", err)
+    dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, pass, host, port, name)
+    db,err:=gorm.Open(mysql.Open(dsn),&gorm.Config{
+        DisableForeignKeyConstraintWhenMigrating: true, // 禁用外键约束,方便测试
+    })
+	if err!=nil{
+		log.Fatal("Database :", err)
 	}
 
 	err = autoMigrate(db)
@@ -32,4 +33,5 @@ func Init() {
 	}
 
 	DB = db
+
 }
