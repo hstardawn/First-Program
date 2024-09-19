@@ -62,7 +62,13 @@ func UpdatePost(c *gin.Context) {
 		utils.JsonErrorResponse(c, 200501, "参数错误")
 		return
 	}
-
+	// 判断用户是否存在
+	_, err = userService.GetUserByUserid(data.UserId)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200506, "用户不存在")
+		
+		return
+	}
 	// 判断帖子是否存在
 	post , err := postService.GetPost(data.PostId)
 	if err != nil{
@@ -105,7 +111,14 @@ func DeletePost(c *gin.Context) {
 		utils.JsonErrorResponse(c, 200501, "参数错误")
 		return
 	}
-
+	// 判断用户是否存在
+	_, err = userService.GetUserByUserid(data.UserId)
+	if err != nil {
+		utils.JsonErrorResponse(c, 200506, "用户不存在")
+		
+		return
+	}
+	
 	// 判断帖子是否存在
 	post, err := postService.GetPost(data.PostId)
 	if err == gorm.ErrRecordNotFound {

@@ -1,6 +1,7 @@
 package userControllers
 
 import (
+	"FORUM/app/midwares"
 	"FORUM/app/models"
 	"FORUM/app/services/sessionService"
 	"FORUM/app/services/userService"
@@ -36,8 +37,8 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	flag := userService.ComparePwd(data.Password, user.Password)
-	if !flag {
+	err = midwares.CheckPassword(data.Password, user.Password)
+	if err != nil {
 		utils.JsonErrorResponse(c, 200507, "密码错误")
 		return
 	}

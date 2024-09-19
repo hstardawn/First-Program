@@ -20,9 +20,6 @@ func GetUserByUserid(userid uint) (*models.User, error) {
 	return &user, result.Error
 }
 
-func ComparePwd(pwd1 string, pwd2 string) bool {
-	return pwd1 == pwd2
-}
 
 func IsUsernameAllDigits(username string) bool {
 	for _, char := range username {

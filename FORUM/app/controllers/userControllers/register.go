@@ -1,6 +1,7 @@
 package userControllers
 
 import (
+	"FORUM/app/midwares"
 	"FORUM/app/models"
 	"FORUM/app/services/userService"
 	"FORUM/app/utils"
@@ -26,9 +27,9 @@ func Register(c *gin.Context) {
 	}
 
 	user, err := userService.GetUserByUsername(data.Username)
-	var usermodel *models.User
-	if user != usermodel{
+	if user != nil && len(user.Password)!= 0{
 		utils.JsonErrorResponse(c, 200505, "用户名已存在")
+		print(user)
 		return
 	} else if err != gorm.ErrRecordNotFound {
 		utils.JsonErrorResponse(c, 200506 ,"查找失败")
@@ -36,7 +37,7 @@ func Register(c *gin.Context) {
 	}
 
 	// 检验密码
-	flag := userService.IsUsernameAllDigits(data.Username)
+	flag := userService.IsUsernameAllDigits(data.Password)
 	if !flag {
 		utils.JsonErrorResponse(c, 200502, "用户名必须为纯数字")
 		return
@@ -53,11 +54,16 @@ func Register(c *gin.Context) {
 		utils.JsonErrorResponse(c, 200504, "用户类型错误")
 		return
 	}
-
+	// 加密
+	hashpassword , err:= midwares.HashPassword(data.Password)
+	if err != nil{
+		utils.JsonErrorResponse(c, 200506, "加密失败")
+		return
+	}
 	err = userService.Register(models.User{
 		Username:  data.Username,
 		Name:      data.Name,
-		Password:  data.Password,
+		Password:  hashpassword,
 		UserType: data.UserType,
 	})
 
